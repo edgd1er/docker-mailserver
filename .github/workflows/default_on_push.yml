@@ -21,7 +21,7 @@ permissions:
 jobs:
   build-image:
     name: 'Build AMD64 Image'
-    uses: ./.github/workflows/generic_build.yml
+    uses: edgd1er/docker-mailserver/.github/workflows/generic_build.yml@master
 
   build-image-arm64:
     name: 'Build ARM64 Image'
