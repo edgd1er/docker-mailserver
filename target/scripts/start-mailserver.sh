@@ -186,6 +186,8 @@ if [[ ! -f /CONTAINER_START ]]; then
   _check
   _setup
   _run_user_patches
+  _log 'info' "load aliases from bashrc"
+  echo -e "if [ -f ~/.bash_aliases ]; then \n. ~/.bash_aliases\nfi" >>/root/.bashrc
 else
   # container was restarted
   _early_variables_setup
