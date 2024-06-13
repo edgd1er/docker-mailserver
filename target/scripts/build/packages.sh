@@ -222,7 +222,8 @@ function _install_fail2ban() {
   # Dependencies (https://github.com/docker-mailserver/docker-mailserver/pull/3403#discussion_r1306581431)
   apt-get "${QUIET}" install --no-install-recommends python3-pyinotify python3-dnspython python3-systemd
 
-  gpg --keyserver "${FAIL2BAN_GPG_PUBLIC_KEY_SERVER}" --recv-keys "${FAIL2BAN_GPG_PUBLIC_KEY_ID}" 2>&1
+  gpg --keyserver "${FAIL2BAN_GPG_PUBLIC_KEY_SERVER}" --recv-keys "${FAIL2BAN_GPG_PUBLIC_KEY_ID}" 2>&1 || true
+  if [[ -f /temp/8738559E26F671DF9E2C6D9E683BF1BEBD0A882C.asc ]]; then gpg --import /temp/8738559E26F671DF9E2C6D9E683BF1BEBD0A882C.asc ; fi
 
   curl -fsSLo fail2ban.deb "${FAIL2BAN_DEB_URL}"
   curl -fsSLo fail2ban.deb.asc "${FAIL2BAN_DEB_ASC_URL}"
