@@ -1,12 +1,20 @@
 name: 'Build the DMS Container Image'
 
 on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: " define platforms"
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
+
   workflow_call:
     inputs:
       platforms:
         required: false
         type: string
-        default: linux/amd64
+        default: linux/amd64,linux/arm64
     outputs:
       build-cache-key:
         description: The cache key to use when restoring an image later
@@ -63,6 +71,7 @@ jobs:
       - name: 'Handle Docker build layer cache'
         uses: actions/cache@v5
         with:
+          save-always: true
           path: /tmp/.buildx-cache
           key: cache-buildx-${{ steps.derive-image-cache-key.outputs.digest }}
           # If no exact cache-hit for key found, lookup caches with a `cache-buildx-` key prefix:
@@ -71,7 +80,7 @@ jobs:
             cache-buildx-
 
       - name: 'Set up QEMU'
-        uses: docker/setup-qemu-action@v3.7.0
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
 
@@ -80,7 +89,7 @@ jobs:
 
       # NOTE: AMD64 can build within 2 minutes
       - name: 'Build images'
-        uses: docker/build-push-action@v6.19.2
+        uses: docker/build-push-action@v6
         with:
           context: .
           # Build at least the AMD64 image (which runs against the test suite).
