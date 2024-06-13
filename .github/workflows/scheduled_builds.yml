@@ -13,21 +13,21 @@ permissions:
 jobs:
   build-images:
     name: 'Build Images'
-    uses: docker-mailserver/docker-mailserver/.github/workflows/generic_build.yml@master
+    uses: edgd1er/docker-mailserver/.github/workflows/generic_build.yml@master
     with:
       platforms: linux/amd64,linux/arm64
 
   scan-image:
     name: 'Scan Image for Vulnerabilities'
     needs: build-images
-    uses: docker-mailserver/docker-mailserver/.github/workflows/generic_vulnerability-scan.yml@master
+    uses: edgd1er/docker-mailserver/.github/workflows/generic_vulnerability-scan.yml@master
     with:
       cache-key: ${{ needs.build-images.outputs.build-cache-key }}
 
   publish-images:
     name: 'Publish Images'
     needs: build-images
-    uses: docker-mailserver/docker-mailserver/.github/workflows/generic_publish.yml@master
+    uses: edgd1er/docker-mailserver/.github/workflows/generic_publish.yml@master
     with:
       cache-key: ${{ needs.build-images.outputs.build-cache-key }}
     secrets: inherit

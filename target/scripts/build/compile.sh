@@ -22,6 +22,7 @@ function _build_package() {
   local XAPIAN_VERSION="${XAPIAN_DEBIAN_VERSION%-*}"
   curl -fsSL "https://deb.debian.org/debian/pool/main/d/dovecot-fts-xapian/dovecot-fts-xapian_${XAPIAN_VERSION}.orig.tar.gz" \
     | tar -xz
+  ls -al
   cd "fts-xapian-${XAPIAN_VERSION}"
 
   # Prepare for building DEB source package:
