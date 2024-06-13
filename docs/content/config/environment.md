@@ -933,6 +933,7 @@ Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 
 ##### SASLAUTHD_MECHANISMS
 
+- `cyrus` => authenticate against sasldb2
 DMS only implements support for these mechanisms:
 
 - **`ldap`** => Authenticate against an LDAP server

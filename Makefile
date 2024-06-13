@@ -58,7 +58,7 @@ tests: ALWAYS_RUN
 	@ for DIR in tests/{serial,parallel/set{1,2,3}} ; do $(MAKE) generate-accounts "$${DIR}" ; done
 
 tests/serial: ALWAYS_RUN
-	@ shopt -s globstar ; ./test/bats/bin/bats $(BATS_FLAGS) test/$@/*.bats
+	@ shopt -s globstar ; ./test/bats/bin/bats $(BATS_FLAGS) test/$@/*.bats -x --print-output-on-failure
 
 tests/parallel/set%: ALWAYS_RUN
 	@ shopt -s globstar ; $(REPOSITORY_ROOT)/test/bats/bin/bats $(BATS_FLAGS) \
