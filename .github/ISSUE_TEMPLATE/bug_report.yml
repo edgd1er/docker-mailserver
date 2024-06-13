@@ -11,7 +11,7 @@ body:
     attributes:
       label: 📝 Preliminary Checks
       description: |
-        By submitting this issue, you agree to our [Code of Conduct](https://github.com/docker-mailserver/docker-mailserver/blob/master/CODE_OF_CONDUCT.md).
+        By submitting this issue, you agree to our [Code of Conduct](https://github.com/edgd1er/docker-mailserver/blob/master/CODE_OF_CONDUCT.md).
       options:
         - label: I tried searching for an existing issue and followed the [debugging docs](https://docker-mailserver.github.io/docker-mailserver/latest/config/debugging/) advice, but still need assistance.
           required: true
