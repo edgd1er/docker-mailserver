@@ -10,6 +10,7 @@ function _main() {
   local PASSWD="${2}"
 
   _manage_accounts_create "${MAIL_ACCOUNT}" "${PASSWD}"
+  [[ "cyrus" == ${SASLAUTHD_MECHANISMS} ]] && _sasl2_cyrus_add_user ${MAIL_ACCOUNT} ${PASSWD} || true
 
   # NOTE: An account has only been added to `postfix-accounts.cf`.
   # The `changedetector` service will be triggered from this update
