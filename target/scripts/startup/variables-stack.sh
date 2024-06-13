@@ -167,9 +167,7 @@ function __environment_variables_general_setup() {
   VARS[SUPERVISOR_LOGLEVEL]="${SUPERVISOR_LOGLEVEL:=warn}"
   VARS[TZ]="${TZ:=}"
   VARS[UPDATE_CHECK_INTERVAL]="${UPDATE_CHECK_INTERVAL:=1d}"
-
   _log 'trace' 'Setting environment variables that require other variables to be set first'
-
   # The Dovecot Quotas feature is presently only supported with the default FILE account provisioner,
   # Enforce disabling the feature, unless it's been explicitly set via ENV (to avoid mismatch between
   # explicit ENV and sourcing from /etc/dms-settings)
@@ -179,6 +177,8 @@ function __environment_variables_general_setup() {
   else
     VARS[ENABLE_QUOTAS]="${ENABLE_QUOTAS:=1}"
   fi
+  VARS[DEFAULT_DESTINATION_RATE_DELAY]="${DEFAULT_DESTINATION_RATE_DELAY:=0s}"
+
 }
 
 # `LOG_LEVEL` must be set early to correctly filter calls to `scripts/helpers/log.sh:_log()`
@@ -234,6 +234,7 @@ function __environment_variables_export() {
 
   sort -o /root/.bashrc     /root/.bashrc
   sort -o /etc/dms-settings /etc/dms-settings
+  echo "[[ -f ~/.bash_aliases ]] && source ~/.bash_aliases || true">>~/.bashrc
 }
 
 # This function sets any environment variable with a value from a referenced file

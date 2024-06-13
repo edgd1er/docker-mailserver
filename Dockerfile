@@ -6,9 +6,11 @@
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DOVECOT_COMMUNITY_REPO=0
 ARG LOG_LEVEL=trace
+ARG APTCACHER=""
 
 FROM docker.io/debian:12-slim AS stage-base
 
+ARG APTCACHER
 ARG DEBIAN_FRONTEND
 ARG DOVECOT_COMMUNITY_REPO
 ARG LOG_LEVEL
@@ -23,10 +25,15 @@ COPY target/bin/sedfile /usr/local/bin/sedfile
 RUN <<EOF
   chmod +x /usr/local/bin/sedfile
   adduser --quiet --system --group --disabled-password --home /var/lib/clamav --no-create-home --uid 200 clamav
+  if [[ -n ${APTCACHER:-""} ]]; then
+    printf "Acquire::http::Proxy \"http://%s:3142\";" "${APTCACHER}">/etc/apt/apt.conf.d/01proxy
+    printf "Acquire::https::Proxy \"http://%s:3142\";" "${APTCACHER}">>/etc/apt/apt.conf.d/01proxy
+  fi
 EOF
 
 COPY target/scripts/build/packages.sh /build/
 COPY target/scripts/helpers/log.sh /usr/local/bin/helpers/log.sh
+COPY target/8738559E26F671DF9E2C6D9E683BF1BEBD0A882C.asc /temp/
 
 RUN /bin/bash /build/packages.sh && rm -r /build
 
@@ -34,6 +41,9 @@ RUN /bin/bash /build/packages.sh && rm -r /build
 # --- Compile deb packages ----------------------
 # -----------------------------------------------
 
+# When absolutely necessary DMS carries support to compile `.deb` packages of software:
+# - `dovecot-fts-xapian` for compatibility with the Dovecot CE `dovecot-core` package:
+#   https://github.com/docker-mailserver/docker-mailserver/pull/3373
 FROM stage-base AS stage-compile
 
 ARG LOG_LEVEL
@@ -80,10 +90,9 @@ EOF
 # --- Dovecot -----------------------------------
 # -----------------------------------------------
 
-# install fts_xapian plugin
-
-COPY --from=stage-compile dovecot-fts-xapian-*.deb /
-RUN dpkg -i /dovecot-fts-xapian-*.deb && rm /dovecot-fts-xapian-*.deb
+# Install compiled `dovecot-fts-xapian` package:
+RUN --mount=type=bind,from=stage-compile,target=/mnt/stage-compile/ \
+  dpkg -i /mnt/stage-compile/dovecot-fts-xapian_*.deb
 
 COPY target/dovecot/*.inc target/dovecot/*.conf /etc/dovecot/conf.d/
 COPY target/dovecot/dovecot-purge.cron /etc/cron.d/dovecot-purge.disabled
@@ -240,6 +249,7 @@ RUN <<EOF
   # this change is for our alternative process manager rather than part of
   # a fix related to the change preceding it.
   echo -e '\n/usr/bin/supervisorctl signal hup rsyslog >/dev/null' >>/usr/lib/rsyslog/rsyslog-rotate
+  sed -i '/. ~\/.bashrc$/a\    . ~\/.bash_aliases' ~/.profile
 EOF
 
 # -----------------------------------------------
@@ -264,6 +274,9 @@ RUN <<EOF
   rm -rf /usr/share/locale/*
   rm -rf /usr/share/man/*
   rm -rf /usr/share/doc/*
+  if [[ -f /etc/apt/apt.conf.d/01proxy ]]; then
+    rm -rf /etc/apt/apt.conf.d/01proxy
+  fi
   update-locale
 EOF
 
@@ -273,10 +286,51 @@ COPY \
   target/scripts/startup/*.sh \
   /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/*
+RUN chmod +x /usr/local/bin/* \
+    && if [[ -f /etc/apt/apt.conf.d/01proxy ]]; then rm -f /etc/apt/apt.conf.d/01proxy ; fi
 
 COPY target/scripts/helpers /usr/local/bin/helpers
 COPY target/scripts/startup/setup.d /usr/local/bin/setup.d
+
+# --------------------------------
+# ------- rewrite address --------
+# --------------------------------
+# sender: SRS_DOMAINNAME rewrite sender domain
+# recipient: docker exec -ti <CONTAINER NAME> setup alias add postmaster@example.com user@example.com
+# add map to main.conf
+RUN postconf -e smtp_generic_maps=hash:/etc/postfix/generic ;\
+    echo -e "# rewrite recipient address: format \n#email/user email" >/etc/postfix/generic ;\
+    echo -e "# copy all locally sent mail to the sent account">/etc/postfix/bcc_map ; \
+    postconf -e alias_maps=hash:/etc/aliases ;\
+    #postconf -e sender_canonical_maps=hash:/etc/postfix/sender_canonical ; \
+    #postconf -e recipient_canonical_maps=hash:/etc/postfix/recipient_canonical ; \
+    postconf -e smtp_generic_maps=hash:/etc/postfix/generic ; \
+    postconf -e sender_bcc_maps=hash:/etc/postfix/bcc_map ; \
+    postconf | grep -oP "(?<=maps = hash:).*" |grep -v alias | xargs -I {} postmap \{\};
+
+# --------------------------------
+# --- Aliases --------------------
+# --------------------------------
+# hadolint ignore=SC2016
+RUN echo -e "if [ -f ~/.bash_aliases ]; then \n. ~/.bash_aliases\nfi" >>/root/.bashrc \
+    && echo 'alias salias="source ~/.bash_aliases"' >/root/.bash_aliases \
+    && echo 'alias modalias="nano ~/.bash_aliases"' >>/root/.bash_aliases \
+    && echo 'alias ll="ls -al"' >>/root/.bash_aliases \
+    && echo 'alias addvim="apt update && apt install --no-install-recommends vim"' >>/root/.bash_aliases \
+    && echo 'function postquery(){ postmap -q \${1} hash:/etc/postfix/\${2}; }' >>/root/.bash_aliases \
+    && echo "alias aliaslist=\"setup alias list | sed 's/\*/setup alias del/'\"" >>/root/.bash_aliases \
+    # && echo "alias aliasdelall=\"setup alias list | awk '/\*/{system(\"setup alias del \"\\\$2\" \"\\\$3) }'\"" >>/root/.bash_aliases \
+    # view queued messages \
+    && echo "alias postview=\"postqueue -p | grep -oP \"^[[:alnum:]]+\" | grep -v \"Mail\" | xargs postcat -bh -q | more\"" >>/root/.bash_aliases \
+    && echo "alias postview2=\"mailq | awk '/^[A-F0-9]+/ {print \$1}' |while read a ; do echo \\\"QUEUE_ID: \${a}\\\";postcat -bh -q \${a%%\**};done\"" >>/root/.bash_aliases \
+    && echo 'alias postflush="postqueue -f"' >>/root/.bash_aliases \
+    && echo "alias queuedelete=\"mailq | grep -oP '^[0-9A-Z]+' |xargs -I % postsuper -d %\"" >>/root/.bash_aliases \
+    && echo "alias queuedelete2=\"mailq | grep -oP '^[0-9A-Z]+' | while read a;do postsuper -d \\${a%%\**} ; done\"" >>/root/.bash_aliases \
+    && echo "alias virtgen='postmap /etc/postfix/virtual'" >>/root/.bash_aliases \
+    && echo "alias sendergen='postmap /etc/postfix/sender_canonical'" >>/root/.bash_aliases \
+    && echo "alias recipientgen='postmap /etc/postfix/recipient_canonical'" >>/root/.bash_aliases \
+    && echo "alias postgen='postconf | grep -oP \"(?<=maps = )(texthash|text|)[^\$].*\"|grep -v alias | grep -oP \"/etc/.+\" | xargs -I {} postmap -v \{\}; postfix reload;'" >>/root/.bash_aliases \
+    && cp -vf /root/.bash_aliases /etc/profile.d/00_aliases.sh && chmod 755 /etc/profile.d/00_aliases.sh
 
 #
 # Final stage focuses only on image config
@@ -286,7 +340,7 @@ FROM stage-main AS stage-final
 ARG DMS_RELEASE=edge
 ARG VCS_REVISION=unknown
 
-WORKDIR /
+WORKDIR /etc/postfix/
 EXPOSE 25 587 143 465 993 110 995 4190
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
