@@ -86,3 +86,11 @@ shellcheck: ALWAYS_RUN
 
 eclint: ALWAYS_RUN
 	@ ./test/linting/lint.sh eclint
+
+# -----------------------------------------------
+# --- fonctionnal tests -------------------------
+# -----------------------------------------------
+
+devrelay:
+	@docker compose -f docker-compose.yaml up -d --build
+	@docker compose -f docker-compose.yaml logs -f

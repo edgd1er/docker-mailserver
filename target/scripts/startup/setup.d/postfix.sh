@@ -23,7 +23,6 @@ function _setup_postfix_early() {
     __postfix__log 'trace' "Configure destination rate to ${DEFAULT_DESTINATION_RATE_DELAY}"
     postconf "default_destination_rate_delay = ${DEFAULT_DESTINATION_RATE_DELAY}"
   fi
-
   # User has explicitly requested to disable SASL auth:
   # TODO: Additive config by feature would be better. Should only enable SASL auth
   # on submission(s) services in master.cf when SASLAuthd or Dovecot is enabled.
