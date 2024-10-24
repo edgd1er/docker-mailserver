@@ -3,7 +3,7 @@
 #################################################
 
 .env
-compose.override.yaml
+compose.override.yml
 docs/site/
 docker-data/
 
@@ -13,6 +13,7 @@ docker-data/
 
 .idea/
 .vscode/
+*.iml
 
 #################################################
 ###  Tests  #####################################

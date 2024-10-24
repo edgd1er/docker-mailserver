@@ -1,12 +1,20 @@
 name: 'Build the DMS Container Image'
 
 on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: " define platforms"
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
+
   workflow_call:
     inputs:
       platforms:
         required: false
         type: string
-        default: linux/amd64
+        default: linux/amd64,linux/arm64
     outputs:
       build-cache-key:
         description: The cache key to use when restoring an image later
@@ -83,7 +91,7 @@ jobs:
 
       # NOTE: AMD64 can build within 2 minutes
       - name: 'Build images'
-        uses: docker/build-push-action@v6.9.0
+        uses: docker/build-push-action@v6
         with:
           context: .
           # Build at least the AMD64 image (which runs against the test suite).

@@ -6,9 +6,11 @@
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DOVECOT_COMMUNITY_REPO=0
 ARG LOG_LEVEL=trace
+ARG APTCACHER=""
 
 FROM docker.io/debian:12-slim AS stage-base
 
+ARG APTCACHER
 ARG DEBIAN_FRONTEND
 ARG DOVECOT_COMMUNITY_REPO
 ARG LOG_LEVEL
@@ -21,12 +23,21 @@ SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
 
 COPY target/bin/sedfile /usr/local/bin/sedfile
 RUN <<EOF
+  if [[ -n "${APTCACHER}" ]]; then
+    echo "Acquire::http::Proxy \"http://${APTCACHER}:3142\";" >/etc/apt/apt.conf.d/01proxy
+    echo "Acquire::https::Proxy \"http://${APTCACHER}:3142\";" >>/etc/apt/apt.conf.d/01proxy
+  fi
   chmod +x /usr/local/bin/sedfile
   adduser --quiet --system --group --disabled-password --home /var/lib/clamav --no-create-home --uid 200 clamav
+  if [[ -n ${APTCACHER:-""} ]]; then
+    printf "Acquire::http::Proxy \"http://%s:3142\";" "${APTCACHER}">/etc/apt/apt.conf.d/01proxy
+    printf "Acquire::https::Proxy \"http://%s:3142\";" "${APTCACHER}">>/etc/apt/apt.conf.d/01proxy
+  fi
 EOF
 
 COPY target/scripts/build/packages.sh /build/
 COPY target/scripts/helpers/log.sh /usr/local/bin/helpers/log.sh
+COPY target/8738559E26F671DF9E2C6D9E683BF1BEBD0A882C.asc /temp/
 
 RUN /bin/bash /build/packages.sh && rm -r /build
 
@@ -290,6 +301,9 @@ RUN <<EOF
   rm -rf /usr/share/locale/*
   rm -rf /usr/share/man/*
   rm -rf /usr/share/doc/*
+  if [[ -f /etc/apt/apt.conf.d/01proxy ]]; then
+    rm -rf /etc/apt/apt.conf.d/01proxy
+  fi
   update-locale
 EOF
 
@@ -299,7 +313,8 @@ COPY \
   target/scripts/startup/*.sh \
   /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/*
+RUN chmod +x /usr/local/bin/* \
+    && if [[ -f /etc/apt/apt.conf.d/01proxy ]]; then rm -f /etc/apt/apt.conf.d/01proxy ; fi
 
 COPY target/scripts/helpers /usr/local/bin/helpers
 COPY target/scripts/startup/setup.d /usr/local/bin/setup.d
