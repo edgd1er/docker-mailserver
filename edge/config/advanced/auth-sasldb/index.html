@@ -2244,24 +2244,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#smtp_usernames" class="md-nav__link">
-    <span class="md-ellipsis">
-      SMTP_USERNAMES
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#smtp_passwords" class="md-nav__link">
-    <span class="md-ellipsis">
-      SMTP_PASSWORDS
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#dovecot__filter-dovecot__attrs" class="md-nav__link">
     <span class="md-ellipsis">
       DOVECOT_*_FILTER &amp; DOVECOT_*_ATTRS
@@ -2362,14 +2344,6 @@
 </ul>
 <h2 id="variables-to-control-provisioning-by-the-container"><a class="toclink" href="#variables-to-control-provisioning-by-the-container">Variables to Control Provisioning by the Container</a></h2>
 <p>Have a look at <a href="../../environment/">the ENV page</a> for information on the default values.</p>
-<h3 id="smtp_usernames"><a class="toclink" href="#smtp_usernames"><code>SMTP_USERNAMES</code></a></h3>
-<p>should contains a list of usernames that will be added to the sasldb file and as email accounts</p>
-<h3 id="smtp_passwords"><a class="toclink" href="#smtp_passwords"><code>SMTP_PASSWORDS</code></a></h3>
-<p>should contains a list of passwords corresponding to the here under usernames.</p>
-<p>examples:
-SMTP_USERNAMES="username1 usename2 username3"
-SMTP_PASSWORDS="passwordA passwordB passwordC"</p>
-<p>username1 will be authenticated with passwordA</p>
 <p>Those variables contain the LDAP lookup filters for postfix, using <code>%s</code> as the placeholder for the domain or email address in question. This means that...</p>
 <ul>
 <li>...for incoming email, the domain must return an entry for the <code>DOMAIN</code> filter (see <a href="http://www.postfix.org/postconf.5.html#virtual_alias_domains"><code>virtual_alias_domains</code></a>).</li>
