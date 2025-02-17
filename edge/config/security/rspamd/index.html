@@ -1295,6 +1295,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#arc-authenticated-received-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      ARC (Authenticated Received Chain)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#abusix-integration" class="md-nav__link">
     <span class="md-ellipsis">
       Abusix Integration
@@ -2700,6 +2709,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#arc-authenticated-received-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      ARC (Authenticated Received Chain)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#abusix-integration" class="md-nav__link">
     <span class="md-ellipsis">
       Abusix Integration
@@ -2928,6 +2946,20 @@ disable-module<span class="w"> </span>chartable
 </details>
 <h3 id="dkim-signing"><a class="toclink" href="#dkim-signing">DKIM Signing</a></h3>
 <p>There is a dedicated <a href="../../best-practices/dkim_dmarc_spf/#dkim">section for setting up DKIM with Rspamd in our documentation</a>.</p>
+<h3 id="arc-authenticated-received-chain"><a class="toclink" href="#arc-authenticated-received-chain">ARC (Authenticated Received Chain)</a></h3>
+<p>ARC is not set up by default, but you can easily enable it by adding a file called <code>arc.conf</code> to <code>docker-data/dms/config/rspamd/override.d/</code>. ARC can use DKIM keys that you should have already created. The configuration file could then contain the following:</p>
+<div class="highlight"><pre><span></span><code><span class="na">sign_local</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span><span class="c1">;</span>
+<span class="na">sign_authenticated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span><span class="c1">;</span>
+
+<span class="na">domain {</span>
+<span class="w">    </span><span class="na">&lt;DOMAIN NAME&gt; {</span>
+<span class="w">        </span><span class="c1"># Change the path here to your actual private key</span>
+<span class="w">        </span><span class="na">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/tmp/docker-mailserver/rspamd/dkim/rsa-2048-mail-&lt;DOMAIN NAME&gt;.private.txt&quot;</span><span class="c1">;</span>
+<span class="w">        </span><span class="c1"># Changhe the selected if you chose a non-default one</span>
+<span class="w">        </span><span class="na">selector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;mail&quot;</span><span class="c1">;</span>
+<span class="w">    </span><span class="na">}</span>
+<span class="na">}</span>
+</code></pre></div>
 <h3 id="abusix-integration"><a class="toclink" href="#abusix-integration"><em>Abusix</em> Integration</a></h3>
 <p>This subsection provides information about the integration of <a href="https://abusix.com/">Abusix</a>, "a set of blocklists that work as an additional email security layer for your existing mail environment". The setup is straight-forward and well documented:</p>
 <ol>
