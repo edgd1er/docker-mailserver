@@ -2068,6 +2068,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2543,6 +2552,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2700,6 +2718,19 @@ plugin {
 <div class="admonition info">
 <p class="admonition-title">Indexing will take a while depending on how large your mail folders</p>
 <p>Usually within 15 minutes or so, you should be able to search your mail using the Dovecot FTS feature! <img alt="🎉" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f389.svg" title=":tada:" /></p>
+</div>
+<h3 id="compatibility"><a class="toclink" href="#compatibility">Compatibility</a></h3>
+<p>Since Solr 9.8.0 was released (Jan 2025), a breaking change <a href="https://issues.apache.org/jira/browse/SOLR-16781">deprecates support for <code>&lt;lib&gt;</code> directives</a> which is presently used by the Dovecot supplied Solr config (<code>solr-config-9.xml</code>) to automatically load additional jars required.</p>
+<p>To enable support for <code>&lt;lib&gt;</code> directives, add the following ENV to your <code>solr</code> container:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">solr</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">SOLR_CONFIG_LIB_ENABLED</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Solr 10</p>
+<p>From the Solr 10 release onwards, this opt-in ENV will no longer be available.</p>
+<p>If Dovecot has not updated their example Solr config (<a href="https://github.com/dovecot/core/pull/238">upstream PR</a>), you will need to manually modify the Solr XML config to remove the <code>&lt;lib&gt;</code> directives and replace the suggested ENV <code>SOLR_CONFIG_LIB_ENABLED=true</code> with <code>SOLR_MODULES=analysis-extras</code>.</p>
 </div>
 
 
