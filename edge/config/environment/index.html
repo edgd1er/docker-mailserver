@@ -5221,13 +5221,27 @@
 <p class="admonition-title">Info</p>
 <p>Values in <strong>bold</strong> are the default values. If an option doesn't work as documented here, check if you are running the latest image. The current <code>master</code> branch corresponds to the image <code>ghcr.io/docker-mailserver/docker-mailserver:edge</code>.</p>
 </div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If an environment variable <code>&lt;VAR&gt;__FILE</code> is set with a valid file path as the value, the content of that file will become the value for <code>&lt;VAR&gt;</code> (<em>provided <code>&lt;VAR&gt;</code> has not already been set</em>).</p>
+</div>
 <h4 id="general"><a class="toclink" href="#general">General</a></h4>
 <h5 id="override_hostname"><a class="toclink" href="#override_hostname">OVERRIDE_HOSTNAME</a></h5>
-<p>If you can't set your hostname (<em>eg: you're in a container platform that doesn't let you</em>) specify it via this environment variable. It will have priority over <code>docker run --hostname</code>, or the equivalent <code>hostname:</code> field in <code>compose.yaml</code>.</p>
+<p>If you cannot set your DMS FQDN as your hostname (<em>eg: you're in a container runtime lacks the equivalent of Docker's <code>--hostname</code></em>), specify it via this environment variable.</p>
 <ul>
-<li><strong>empty</strong> =&gt; Uses the <code>hostname -f</code> command to get canonical hostname for DMS to use.</li>
+<li><strong>empty</strong> =&gt; Internally uses the <code>hostname --fqdn</code> command to get the canonical hostname assigned to the DMS container.</li>
 <li>=&gt; Specify an FQDN (fully-qualified domain name) to serve mail for. The hostname is required for DMS to function correctly.</li>
 </ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p><code>OVERRIDE_HOSTNAME</code> is checked early during DMS container setup. When set it will be preferred over querying the containers hostname via the <code>hostname --fqdn</code> command (<em>configured via <code>docker run --hostname</code> or the equivalent <code>hostname:</code> field in <code>compose.yaml</code></em>).</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Compatibility may differ</p>
+<p><code>OVERRIDE_HOSTNAME</code> is not a complete replacement for adjusting the containers configured hostname. It is a best effort workaround for supporting deployment environments like Kubernetes or when using Docker with <code>--network=host</code>.</p>
+<p>Typically this feature is only useful when software supports configuring a specific hostname to use, instead of a default fallback that infers the hostname (such as retrieving the hostname via libc / NSS). [Fetchmail is known to be incompatible][gh--issue::hostname-compatibility] with this ENV, requiring manual workarounds.</p>
+<p>Compatibility differences are being <a href="https://github.com/docker-mailserver/docker-mailserver/issues/3520#issuecomment-1700191973">tracked here</a> as they become known.</p>
+</div>
 <h5 id="log_level"><a class="toclink" href="#log_level">LOG_LEVEL</a></h5>
 <p>Set the log level for DMS. This is mostly relevant for container startup scripts and change detection event feedback.</p>
 <p>Valid values (in order of increasing verbosity) are: <code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code> and <code>trace</code>. The default log level is <code>info</code>.</p>
@@ -5378,9 +5392,17 @@ FAIL2BAN_BLOCKTYPE=drop</li>
 <h5 id="tls_level"><a class="toclink" href="#tls_level">TLS_LEVEL</a></h5>
 <ul>
 <li><strong>empty</strong> =&gt; modern</li>
-<li>modern =&gt; Enables TLSv1.2 and modern ciphers only. (default)</li>
-<li>intermediate =&gt; Enables TLSv1, TLSv1.1 and TLSv1.2 and broad compatibility ciphers.</li>
+<li><code>modern</code> =&gt; Limits the cipher suite to secure ciphers only.</li>
+<li><code>intermediate</code> =&gt; Relaxes security by adding additional ciphers for broader compatibility.</li>
 </ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>In both cases TLS v1.2 is the minimum protocol version supported.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Prior to DMS v12.0, <code>TLS_LEVEL=intermediate</code> additionally supported TLS versions 1.0 and 1.1. If you still have legacy devices that can only use these versions of TLS, please follow <a href="https://github.com/docker-mailserver/docker-mailserver/pull/2945#issuecomment-1949907964">this workaround advice</a>.</p>
+</div>
 <h5 id="spoof_protection"><a class="toclink" href="#spoof_protection">SPOOF_PROTECTION</a></h5>
 <p>Configures the handling of creating mails with forged sender addresses.</p>
 <ul>
