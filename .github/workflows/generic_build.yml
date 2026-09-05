@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: ubuntu-24.04
+      cache-key:
+        description: "Cache key created by the build job (used to restore the build cache)"
+        required: true
+        type: string
 
 permissions:
   contents: read

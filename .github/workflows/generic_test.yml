@@ -2,6 +2,11 @@ name: 'Test the DMS Container Image'
 
 on:
   workflow_call:
+    inputs:
+      cache-key:
+        description: "Cache key created by the build job (used to restore the build cache)"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,6 +25,16 @@ jobs:
         with:
           # Required to retrieve bats (core + extras):
           submodules: recursive
+
+      # Get the cached build layers from the build job:
+      # This should always be a cache-hit, thus `restore-keys` fallback is not used.
+      # No new cache uploads should ever happen for this job.
+      - name: 'Retrieve image built from build cache'
+        uses: actions/cache@v6
+        with:
+          save-always: true
+          path: /tmp/.buildx-cache
+          key: cache-buildx-${{ inputs.cache-key }}
 
       # Configures buildx to use `docker-container` driver,
       # Ensures consistent BuildKit version (not coupled to Docker Engine),
