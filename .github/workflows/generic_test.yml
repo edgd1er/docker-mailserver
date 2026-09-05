@@ -3,6 +3,9 @@ name: 'Test the DMS Container Image'
 on:
   workflow_call:
 
+  workflow_dispatch:
+
+
 permissions:
   contents: read
 
