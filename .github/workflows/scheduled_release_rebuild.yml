@@ -31,10 +31,10 @@ on:
         required: false
         type: boolean
         default: false
-  schedule:
+#  schedule:
     # Not at minute 0: GitHub delays or drops scheduled runs
     # at the start of the hour, when load is highest.
-    - cron: 35 4 * * *
+#    - cron: 35 4 * * *
 
 permissions:
   # Required to look up the artifacts that record rebuild attempts:

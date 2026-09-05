@@ -23,6 +23,7 @@ env:
 
 jobs:
   deploy:
+    if: false
     permissions:
       contents: write
     name: 'Deploy Docs'

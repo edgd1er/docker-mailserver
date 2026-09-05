@@ -19,8 +19,7 @@ jobs:
     name: 'Build ARM64 Image'
     uses: ./.github/workflows/generic_build.yml
     with:
-      platforms: linux/arm64
-      runner: ubuntu-24.04-arm
+      runner: 'ubuntu-24.04-arm'
 
   scan-image:
     name: 'Scan Image for Vulnerabilities'

@@ -3,7 +3,7 @@
 #################################################
 
 .env
-compose.override.yaml
+compose.override.yml
 docs/site/
 docker-data/
 
@@ -13,6 +13,7 @@ docker-data/
 
 .idea/
 .vscode/
+*.iml
 
 #################################################
 ###  Tests  #####################################
@@ -21,3 +22,5 @@ docker-data/
 test/duplicate_configs/
 test/config/dovecot-masters.cf
 test/config/postfix-accounts.cf
+
+mailserver.env
