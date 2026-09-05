@@ -1,6 +1,18 @@
 name: 'Build the DMS Container Image'
 
 on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        required: false
+        type: string
+        default: linux/amd64
+      runner:
+        description: " define runner"
+        required: false
+        type: string
+        default: ubuntu-24.04
+
   workflow_call:
     inputs:
       platforms:
@@ -11,6 +23,7 @@ on:
         required: false
         type: string
         default: ubuntu-24.04
+
 
 permissions:
   contents: read
@@ -47,11 +60,29 @@ jobs:
       - name: 'Set up Docker Buildx'
         uses: docker/setup-buildx-action@v4.3.0
 
+      - name: 'Generate metadata tags'
+        id: meta
+        uses: docker/metadata-action@v6.2.0
+        with:
+          images: edgd1er/docker-mailserver
+          tags: |
+            type=schedule,pattern=nightly
+            type=edge,branch=develop
+            type=ref,event=branch
+
       - name: 'Build images'
         uses: docker/build-push-action@v7.3.0
         with:
           context: .
           platforms: ${{ inputs.platforms }}
+
+      - name: 'Build images'
+        uses: docker/build-push-action@v7.3.0
+        with:
+          context: .
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           # Per-platform GHA scope. BuildKit matches at the layer level, so the
           # newest successful build overwrites the scope (no content-digest key).
           cache-from: type=gha,scope=${{ steps.cache-scope.outputs.name }}
