@@ -19,6 +19,7 @@ function _setup_postfix_early() {
     postconf "inet_protocols = ${POSTFIX_INET_PROTOCOLS}"
   fi
 
+  #required at early stage for tests, will be replaced later during setup
   __postfix__log 'trace' "Configuring SASLauthd"
   if [[ ${ENABLE_SASLAUTHD} -eq 1 ]] && [[ ! -f /etc/sasl2/smtpd.conf ]]; then
     mkdir -p /etc/sasl2
@@ -26,6 +27,11 @@ function _setup_postfix_early() {
 pwcheck_method: saslauthd
 mech_list: plain login
 EOF
+  fi
+
+  if [[ -n ${DEFAULT_DESTINATION_RATE_DELAY} ]]; then
+    __postfix__log 'trace' "Configure destination rate to ${DEFAULT_DESTINATION_RATE_DELAY}"
+    postconf "default_destination_rate_delay = ${DEFAULT_DESTINATION_RATE_DELAY}"
   fi
 
   # User has explicitly requested to disable SASL auth:

@@ -10,6 +10,7 @@ function _main() {
   local PASSWD="${2}"
 
   _manage_accounts_update "${MAIL_ACCOUNT}" "${PASSWD}"
+  if [[ "cyrus" == "${SASLAUTHD_MECHANISMS}" ]]; then _sasl2_cyrus_add_user "${MAIL_ACCOUNT}" "${PASSWD}"; fi
 }
 
 function __usage() {

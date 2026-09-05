@@ -1,17 +1,78 @@
 #!/bin/bash
 
 function _setup_saslauthd() {
-  _log 'debug' 'Setting up SASLAUTHD'
+  _log 'debug' 'Setting up SASLAUTHD '${SASLAUTHD_MECHANISMS}
+  __postfix__log 'trace' "Configuring SASLauthd cyrus if requested"
+  gpasswd -a postfix sasl >/dev/null
+  # cyrus uses a plugin not a saslauth service.
+  if [[ "${SASLAUTHD_MECHANISMS,,:-''}" == cyrus ]]; then
+    __postfix__log 'debug' 'Setting up SASLAUTHD for cyrus'
+    CPATH="/etc/postfix/sasl"
+    RCPATH="/tmp/docker-mailserver"
+    CFILE="smtpd"
 
-  # NOTE: It's unlikely this file would already exist,
-  # Unlike Dovecot/Postfix LDAP support, this file has no ENV replacement
-  # nor does it copy from the DMS config volume to this internal location.
-  if [[ ${ACCOUNT_PROVISIONER} == 'LDAP' ]] \
-  && [[ ! -f /etc/saslauthd.conf ]]; then
-    _log 'trace' 'Creating /etc/saslauthd.conf'
+    #smtpd_sasl_auth_enable / smtpd_sasl_type / smtpd_sasl_path = private/auth smtpd_sasl_security_options = noanonymous, noplaintext
+    #smtpd_sasl_tls_security_options = noanonymous
+    __postfix__log 'trace' 'Setting up cyrus smtp auth'
+    postconf -e "smtpd_sasl_auth_enable = yes"
+    # Cyrus SASL configuration file name: smtpd.conf
+    postconf -e "smtpd_sasl_path = ${CFILE}"
+    #cyrus/dovecot auth for smtp.
+    postconf -e "smtpd_sasl_type = cyrus"
+    #sed -i -E "s#(smtpd_sasl_type=).*#\1cyrus#g" /etc/postfix/master.cf
+    #change master.cf as postconf -e is not editing it.
+    #sed -i -n "s|^  -o smtpd_sasl_type=.*|^  -o smtpd_sasl_type=cyrus|g" /etc/postfix/master.cf
 
-    # Create a config based on ENV
-    sed '/^.*: $/d'> /etc/saslauthd.conf << EOF
+    # location where Cyrus SASL searches
+    postconf -e "cyrus_sasl_config_path = ${CPATH}/${CFILE}.conf"
+    #import existing users
+    if [[ -f ${RCPATH}/sasldb2 ]]; then cp -fp "${RCPATH}/sasldb2" /etc/; fi
+
+    __postfix__log 'trace' 'Setting up sasl auth plugin for smtpd'
+    mkdir -p "${CPATH}"
+    #create smtp.conf + symlink
+    #echo -e "pwcheck_method: auxprop\nauxprop_plugin: sasldb\nmech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM" >"${RCPATH}/${CFILE}.conf"
+    echo -e "pwcheck_method: auxprop\nauxprop_plugin: sasldb\nmech_list: PLAIN LOGIN " >"${RCPATH}/${CFILE}.conf"
+    if [[ -f ${CPATH}/${CFILE}.conf ]]; then
+      rm "${CPATH}/${CFILE}.conf"
+    fi
+    if [[ ! -L ${CPATH}/${CFILE}.conf ]]; then
+      ln -s "${RCPATH}/${CFILE}.conf" "${CPATH}/${CFILE}.conf"
+    fi
+  elif [[ "${SASLAUTHD_MECHANISMS,,:-''}" == dovecot ]]; then
+    __postfix__log 'debug' 'Setting up SASLAUTHD for dovecot'
+    CFILE="/var/run/dovecot/auth-client"
+
+    __postfix__log 'trace' 'Setting up Dovecot smtp auth'
+    postconf -e "smtpd_sasl_auth_enable = yes"
+    postconf -e "smtpd_sasl_path = ${CFILE}"
+    postconf -e "smtpd_sasl_type = dovecot"
+    #sed -i -r "s|^(auth_mechanisms = plain login)$|\1 digest-md5   cram-md5|" /etc/dovecot/conf.d/10-auth.conf
+    # is block already present
+    if ! grep -q "unix_listener auth-client" /etc/dovecot/conf.d/10-master.conf; then
+      # if not then add it after the line "service auth {"
+      sed -i '/service auth {/a\
+    unix_listener auth-client {\
+      mode = 0666\
+      user = postfix\
+      group = postfix\
+    }' /etc/dovecot/conf.d/10-master.conf
+      echo "unix_listener auth-client section added."
+    else
+      echo "unix_listener auth-client section already set, not added."
+    fi
+  else
+    _log 'debug' 'Setting up SASLAUTHD'
+
+    # NOTE: It's unlikely this file would already exist,
+    # Unlike Dovecot/Postfix LDAP support, this file has no ENV replacement
+    # nor does it copy from the DMS config volume to this internal location.
+    if [[ ${ACCOUNT_PROVISIONER} == 'LDAP' ]] &&
+      [[ ! -f /etc/saslauthd.conf ]]; then
+      _log 'trace' 'Creating /etc/saslauthd.conf'
+
+      # Create a config based on ENV
+      sed '/^.*: $/d' >/etc/saslauthd.conf <<EOF
 ldap_servers: ${SASLAUTHD_LDAP_SERVER:=${LDAP_SERVER_HOST}}
 ldap_auth_method: ${SASLAUTHD_LDAP_AUTH_METHOD:=bind}
 ldap_bind_dn: ${SASLAUTHD_LDAP_BIND_DN:=${LDAP_BIND_DN}}
@@ -27,18 +88,16 @@ ldap_mech: ${SASLAUTHD_LDAP_MECH}
 ldap_referrals: yes
 log_level: 10
 EOF
+    fi
+    sed -i \
+      -e "/^[^#].*smtpd_sasl_type.*/s/^/#/g" \
+      -e "/^[^#].*smtpd_sasl_path.*/s/^/#/g" \
+      /etc/postfix/master.cf
+
+    sed -i \
+      -e "/smtpd_sasl_path =.*/d" \
+      -e "/smtpd_sasl_type =.*/d" \
+      -e "/dovecot_destination_recipient_limit =.*/d" \
+      /etc/postfix/main.cf
   fi
-
-  sed -i \
-    -e "/^[^#].*smtpd_sasl_type.*/s/^/#/g" \
-    -e "/^[^#].*smtpd_sasl_path.*/s/^/#/g" \
-    /etc/postfix/master.cf
-
-  sed -i \
-    -e "/smtpd_sasl_path =.*/d" \
-    -e "/smtpd_sasl_type =.*/d" \
-    -e "/dovecot_destination_recipient_limit =.*/d" \
-    /etc/postfix/main.cf
-
-  gpasswd -a postfix sasl >/dev/null
 }

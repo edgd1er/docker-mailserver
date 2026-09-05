@@ -9,6 +9,10 @@ function _main() {
   # Tests expect early exit without error if no DB exists:
   [[ -s ${DATABASE_ACCOUNTS} ]] || return 0
 
+  local MAIL_ACCOUNT="${1}"
+  local PASSWD="${2}"
+  if [[ "cyrus" == "${SASLAUTHD_MECHANISMS}" ]]; then _sasl2_cyrus_del_user "${MAIL_ACCOUNT}" "${PASSWD}"; fi
+
   _maildel_request_if_missing
 
   # TODO: May want to lock all database files prior to loop? (DATABASE_ACCOUNTS DATABASE_QUOTA DATABASE_VIRTUAL)
