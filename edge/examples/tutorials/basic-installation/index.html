@@ -2994,10 +2994,10 @@
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_SEARCH_BASE=ou=people,dc=localhost,dc=localdomain</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_BIND_DN=cn=admin,dc=localhost,dc=localdomain</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_BIND_PW=admin</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_QUERY_FILTER_USER=(&amp;(mail=%s)(mailEnabled=TRUE))</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_QUERY_FILTER_GROUP=(&amp;(mailGroupMember=%s)(mailEnabled=TRUE))</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_QUERY_FILTER_ALIAS=(|(&amp;(mailAlias=%s)(objectClass=PostfixBookMailForward))(&amp;(mailAlias=%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE)))</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LDAP_QUERY_FILTER_DOMAIN=(|(&amp;(mail=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&amp;(mailGroupMember=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&amp;(mailalias=*@%s)(objectClass=PostfixBookMailForward)))</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTFIX_USERS_QUERY_FILTER=(&amp;(mail=%s)(mailEnabled=TRUE))</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTFIX_GROUPS_QUERY_FILTER=(&amp;(mailGroupMember=%s)(mailEnabled=TRUE))</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTFIX_ALIASES_QUERY_FILTER=(|(&amp;(mailAlias=%s)(objectClass=PostfixBookMailForward))(&amp;(mailAlias=%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE)))</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POSTFIX_DOMAINS_QUERY_FILTER=(|(&amp;(mail=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&amp;(mailGroupMember=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&amp;(mailalias=*@%s)(objectClass=PostfixBookMailForward)))</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DOVECOT_PASS_FILTER=(&amp;(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%{user | username}))</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DOVECOT_USER_FILTER=(&amp;(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%{user | username}))</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ENABLE_SASLAUTHD=1</span>
@@ -3079,8 +3079,8 @@ ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">465</spa
 <p class="admonition-title">If you manually manage the DNS zone file for the domain</p>
 <p>It would look something like this:</p>
 <div class="highlight"><pre><span></span><code>$ORIGIN example.com
-@     IN  A      10.11.12.13
-mail  IN  A      10.11.12.13
+@     IN  A      192.0.2.3
+mail  IN  A      192.0.2.3
 
 ; mail server for example.com
 @     IN  MX  10 mail.example.com.
